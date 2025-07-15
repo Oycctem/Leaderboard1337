@@ -1,46 +1,55 @@
 // main.ts
-import { Application, oakCors, Router } from "./deps.ts";
-import { config, Database } from "./deps.ts";
+import { Application, oakCors, Router } from "./deps.ts"
+import { config, Database } from "./deps.ts"
 
 // setup env variables
-const env = config();
+const env = config()
 
 // Get the environment variables
-const UID = env.UID;
-const SECRET = env.SECRET;
-const REDIRECT_URI = env.REDIRECT_URI;
-const BASE_URL = env.BASE_URL;
+const UID = env.UID
+const SECRET = env.SECRET
+const REDIRECT_URI = env.REDIRECT_URI
+const BASE_URL = env.BASE_URL
 
 // Structure of stored documents (Campus)
 interface Campus {
-  id: number;
-  name: string;
+  id: number
+  name: string
 }
 
 // Structure of stored documents (Promo)
 interface Promo {
-  pool_year: number;
-  pool_month: string;
-  begin_at: string;
-  Campus: Campus;
+  pool_year: number
+  pool_month: string
+  begin_at: string
+  Campus: Campus
+}
+
+// Structure for user data sent to frontend
+interface UserData {
+  id: number | null
+  order: number
+  login: string
+  image: string
+  lvl: string // Changed to string to match toFixed(2) output
 }
 
 // Initialize the databases
-const campusDB = new Database("api/db/campus.json");
-const promoDB = new Database("api/db/promo.json");
+const campusDB = new Database("api/db/campus.json")
+const promoDB = new Database("api/db/promo.json")
 
 // Create a router
-const router = new Router();
+const router = new Router()
 
 // Create a route
 router.post("/login", async (context) => {
-  const body = await context.request.body().value;
-  const code = body.query.code;
+  const body = await context.request.body().value
+  const code = body.query.code
   var contextResponse = {
     status: 200,
     data: {},
     message: "",
-  };
+  }
   try {
     const response = await fetch("https://api.intra.42.fr/oauth/token", {
       method: "POST",
@@ -54,22 +63,22 @@ router.post("/login", async (context) => {
         code: code,
         redirect_uri: REDIRECT_URI,
       }),
-    });
-    const data = await response.json();
+    })
+    const data = await response.json()
     contextResponse = {
       status: 200,
       data: data,
       message: "Login successful",
-    };
+    }
   } catch (error) {
-    console.log("error[65]: ", error);
+    console.log("error[65]: ", error)
     contextResponse = {
       status: 400,
       data: {},
       message: error,
-    };
+    }
   }
-  const token = (contextResponse.data as { access_token: string }).access_token;
+  const token = (contextResponse.data as { access_token: string }).access_token
   try {
     const me = await fetch(`${BASE_URL}/v2/me`, {
       method: "GET",
@@ -77,13 +86,13 @@ router.post("/login", async (context) => {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-    });
-    const me_data = await me.json();
-    const campus = me_data.campus[0];
-    const begin_at = me_data.cursus_users[0].begin_at;
-    var promoExists = await promoDB.findOne({ begin_at: begin_at });
+    })
+    const me_data = await me.json()
+    const campus = me_data.campus[0]
+    const begin_at = me_data.cursus_users[0].begin_at
+    var promoExists = await promoDB.findOne({ begin_at: begin_at })
     if (!promoExists) {
-      const begin_at_date = new Date(begin_at);
+      const begin_at_date = new Date(begin_at)
       const newPromo: Promo = {
         pool_year: begin_at_date.getUTCFullYear(),
         pool_month: begin_at_date.toLocaleString("default", {
@@ -94,107 +103,145 @@ router.post("/login", async (context) => {
           id: campus.id,
           name: campus.name,
         },
-      };
-      await promoDB.insertOne(newPromo);
-      promoExists = newPromo;
+      }
+      await promoDB.insertOne(newPromo)
+      promoExists = newPromo
     }
     contextResponse.data = {
       ...contextResponse.data,
       campus: campus,
       promo: promoExists,
-    };
+    }
     // ----------------------------------------------------
   } catch (error) {
-    console.log("error[109]: ", error);
+    console.log("error[109]: ", error)
     contextResponse = {
       status: 400,
       data: {},
       message: error,
-    };
-  }
-  context.response.body = contextResponse;
-});
-
-const getCampusId = async (campus_name: String, token: String) => {
-  const endPoint: String = "/v2/campus?filter[country]=Morocco";
-  try {
-    const response = await fetch(`${BASE_URL}${endPoint}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    const campus = data.find((campus: any) => campus.name === campus_name);
-    if (campus === undefined) {
-      return 55; // Default campus id
     }
-    return campus.id;
-  } catch (error) {
-    return 55; // Default campus id
   }
-};
+  context.response.body = contextResponse
+})
 
-// create a route
+// Simplified campus mapping - only 4 campuses
+const CAMPUS_ID_MAP: { [key: string]: number } = {
+  Tétouan: 55,
+  Rabat: 75,
+  Benguerir: 21,
+  Khouribga: 16,
+}
+
+// Updated route to fetch ALL users at once
 router.post("/cursus_users", async (context) => {
-  const body = await context.request.body().value;
-  const firstDay = body.query.firstDay;
-  const lastDay = body.query.lastDay;
-  const page = body.query.page;
-  const token = body.query.token;
-  const currentPage = body.query.currentPage;
-  const campus_name = body.query.campus_name;
-  const CAMPUS_ID_MAP: { [key: string]: number } = {
-    "Khouribga": 16,
-    "Benguerir": 21,
-    "Tétouan": 55,
-    "Rabat": 75,
-  };
-  const campus_id = CAMPUS_ID_MAP[campus_name as string] || 55; // Default to Tétouan if not found
-  const endPoint: String = `/v2/cursus/9/cursus_users?filter[campus_id]=${campus_id}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=100&sort=-level`;
+  const body = await context.request.body().value
+  const firstDay = body.query.firstDay
+  const lastDay = body.query.lastDay
+  const token = body.query.token
+  const campus_name = body.query.campus_name
+
+  const campus_id = CAMPUS_ID_MAP[campus_name as string] || 55 // Default to Tétouan if not found
+
   try {
-    const response = await fetch(`${BASE_URL}${endPoint}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    let tempUsers = [];
-    try {
-      tempUsers = data.map((user: any, index: number) => ({
-        id: user.user.id,
-        order: currentPage * 100 - 99 + index,  // Pure calculation
-        login: user.user.login,
-        image: user.user.image.versions.medium,
-        lvl: user.level.toFixed(2),
-      }));
-    } catch (mapError) {
-      console.log("Mapping error: ", mapError);
+    let allUsers: any[] = []
+    let page = 1
+    let hasMoreData = true
+
+    // Fetch all pages
+    while (hasMoreData) {
+      // Changed per_page to 400
+      const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campus_id}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=400&sort=-level`
+
+      const response = await fetch(`${BASE_URL}${endPoint}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      const data = await response.json()
+
+      // Ensure data is an array before processing
+      if (!Array.isArray(data)) {
+        console.error("Received non-array data from 42 API:", data)
+        hasMoreData = false // Stop fetching if unexpected data
+        continue
+      }
+
+      if (data.length === 0) {
+        hasMoreData = false
+      } else {
+        allUsers = allUsers.concat(data)
+        page++
+      }
+
+      // Safety check to prevent infinite loops (max 15 pages = 6000 users with per_page=400)
+      if (page > 15) {
+        console.warn("Reached page limit (15) for fetching users. Some users might not be included.")
+        hasMoreData = false
+      }
     }
+
+    let tempUsers: UserData[] = []
+    try {
+      // Map all users with correct ranking, adding robust checks
+      tempUsers = allUsers.map((user: any, index: number) => ({
+        id: user?.user?.id || null, // Ensure ID is not undefined
+        order: index + 1, // This will always be a number
+        login: user?.user?.login || "N/A",
+        image: user?.user?.image?.versions?.medium || "/cat.png",
+        lvl: user?.level !== undefined && user.level !== null ? Number.parseFloat(user.level).toFixed(2) : "0.00", // Ensure level is a number before toFixed
+      }))
+      console.log("Backend sending tempUsers:", tempUsers) // Log the data being sent
+    } catch (mapError) {
+      console.error("Error during user data mapping:", mapError)
+      // If mapping fails, send an empty array or an error message
+      context.response.body = {
+        status: 500,
+        data: [],
+        message: "Error processing user data on server.",
+      }
+      return // Exit early
+    }
+
     context.response.body = {
       status: 200,
       data: tempUsers,
       message: "Users fetched successfully",
-    };
+      total: tempUsers.length,
+    }
   } catch (error) {
-    console.log("error[177]: ", error);
+    console.error("Error fetching or processing cursus users:", error)
     context.response.body = {
       status: 400,
-      data: {},
-      message: error,
-    };
+      data: [], // Send empty array on error
+      message: "Failed to fetch users: " + error.message,
+    }
   }
-});
+})
+
+// Add this new route after the existing routes:
+router.get("/campuses", async (context) => {
+  const availableCampuses = Object.entries(CAMPUS_ID_MAP).map(([name, id]) => ({
+    id,
+    name,
+  }))
+
+  context.response.body = {
+    status: 200,
+    data: availableCampuses,
+    message: "Campuses fetched successfully",
+  }
+})
 
 // Create your Deno application
-const app = new Application();
-app.use(oakCors());
-app.use(router.routes());
-app.use(router.allowedMethods());
+const app = new Application()
+app.use(oakCors())
+app.use(router.routes())
+app.use(router.allowedMethods())
 
 // Start the server
-console.log("Server is running on localhost:8000");
-await app.listen({ port: 8000 });
+console.log("Server is running on localhost:8000")
+await app.listen({ port: 8000 })
+

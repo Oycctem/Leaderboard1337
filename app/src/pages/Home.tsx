@@ -26,7 +26,7 @@ function Home() {
 
   // Only 4 campuses as requested
   const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([
-    { id: 55, name: "Tétouan" },
+    { id: 55, name: "Tetouan" },
     { id: 75, name: "Rabat" },
     { id: 21, name: "Benguerir" },
     { id: 16, name: "Khouribga" },
@@ -107,8 +107,9 @@ function Home() {
     "2023-09": "2023-09",
     "2023-08": "2023-08",
     "spliter-3": "---",
-    "2022-05": "2022-05",
+    "2022-06": "2022-06",
     "2022-03": "2022-03",
+    "2022-04": "2022-04",
   }
 
   const getRankBadge = (rank: number | string) => {

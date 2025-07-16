@@ -170,9 +170,9 @@ function Home() {
       console.warn("getRankBadge received non-numeric rank after conversion:", rank, "Converted to:", numericRank)
       return "N/A"
     }
-    if (numericRank === 1) return "🥇"
-    if (numericRank === 2) return "🥈"
-    if (numericRank === 3) return "🥉"
+    if (numericRank === 1) return "1🥇"
+    if (numericRank === 2) return "2🥈"
+    if (numericRank === 3) return "3🥉"
     return `#${numericRank}`
   }
 
@@ -314,7 +314,7 @@ function Home() {
             {/* End of results message */}
             {!hasMoreUsers && users.length > 0 && (
               <div className="text-center mt-8 py-6 border-t border-slate-700">
-                <p className="text-slate-400">🎉 You've reached the end! Showing all {users.length} users.</p>
+                <p className="text-slate-400">🎉 You've reached the end! Showing all {users.length} Poolers.</p>
               </div>
             )}
           </>

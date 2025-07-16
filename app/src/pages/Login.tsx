@@ -9,11 +9,13 @@ function Login() {
   return (
     <main className="min-h-screen flex flex-col justify-center items-center p-6 bg-slate-900">
       <div className="text-center space-y-8 max-w-md w-full">
-        {/* Logo */}
+        {/* Big Transparent Logo */}
         <div className="flex justify-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
-            <img className="w-10 h-10 filter brightness-0 invert" src="/gari1.svg.png" alt="42 Logo" />
-          </div>
+          <img
+            className="w-64 h-64 object-contain"
+            src="/gari1.svg.png"
+            alt="42 Logo"
+          />
         </div>
 
         {/* Title */}
@@ -46,4 +48,3 @@ function Login() {
 }
 
 export default Login
-

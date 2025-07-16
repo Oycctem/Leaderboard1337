@@ -6,6 +6,7 @@ import { Link } from "react-router-dom"
 import "../App.css"
 
 interface User {
+  id: number | null
   order: number
   login: string
   image?: string
@@ -20,13 +21,16 @@ interface Campus {
 function Home() {
   const [users, setUsers] = useState([] as User[])
   const [totalUsers, setTotalUsers] = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasMoreUsers, setHasMoreUsers] = useState(true)
   const loading = useRef<HTMLDivElement>(null)
   var { campus_name, begin_at } = useParams()
   const token: string = localStorage.getItem("token") || ""
 
   // Only 4 campuses as requested
   const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([
-    { id: 55, name: "Tetouan" },
+    { id: 55, name: "Tétouan" },
     { id: 75, name: "Rabat" },
     { id: 21, name: "Benguerir" },
     { id: 16, name: "Khouribga" },
@@ -48,51 +52,99 @@ function Home() {
     fetchCampuses()
   }, [])
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      // Show loading overlay
+  const fetchUsers = async (page = 1, append = false) => {
+    if (!append) {
+      // Show loading overlay for initial load
       if (loading.current) {
         loading.current.classList.remove("hidden")
       }
+    } else {
+      setIsLoading(true)
+    }
 
-      const endPoint: string = `${import.meta.env.VITE_PUBLIC_API_URL}/cursus_users`
-      const date = new Date(begin_at || new Date().toISOString())
-      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString()
-      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString()
-      const body = {
-        query: {
-          firstDay: firstDay,
-          lastDay: lastDay,
-          token: token,
-          campus_name: campus_name,
+    const endPoint: string = `${import.meta.env.VITE_PUBLIC_API_URL}/cursus_users`
+    const date = new Date(begin_at || new Date().toISOString())
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString()
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString()
+    const body = {
+      query: {
+        firstDay: firstDay,
+        lastDay: lastDay,
+        token: token,
+        campus_name: campus_name,
+        page: page,
+      },
+    }
+    try {
+      const response = await fetch(`${endPoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      }
-      try {
-        const response = await fetch(`${endPoint}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        })
-        const data = await response.json()
-        console.log("Received data from backend:", data) // Log the data received
+        body: JSON.stringify(body),
+      })
+      const data = await response.json()
+      console.log("Raw response from backend:", data)
 
-        setUsers(data.data || [])
-        setTotalUsers(data.total || 0)
-      } catch (error) {
-        console.log("error in fetchUsers: ", error)
+      if (data.status === 200 && Array.isArray(data.data)) {
+        // Calculate the correct order based on page and existing users
+        const startingOrder = append ? users.length + 1 : 1
+        const processedUsers = data.data.map((user: any, index: number) => ({
+          ...user,
+          order: startingOrder + index,
+        }))
+
+        console.log("Processed users with correct order:", processedUsers)
+
+        if (append) {
+          setUsers((prevUsers) => [...prevUsers, ...processedUsers])
+        } else {
+          setUsers(processedUsers)
+          setTotalUsers(data.total || processedUsers.length)
+        }
+
+        // Check if there are more users to load
+        setHasMoreUsers(processedUsers.length === 100)
+      } else {
+        console.error("Invalid data structure received:", data)
+        if (!append) {
+          setUsers([])
+          setTotalUsers(0)
+        }
+        setHasMoreUsers(false)
+      }
+    } catch (error) {
+      console.error("Error in fetchUsers:", error)
+      if (!append) {
         setUsers([])
         setTotalUsers(0)
-      } finally {
+      }
+      setHasMoreUsers(false)
+    } finally {
+      if (!append) {
         // Hide loading overlay
         if (loading.current) {
           loading.current.classList.add("hidden")
         }
+      } else {
+        setIsLoading(false)
       }
     }
-    fetchUsers()
+  }
+
+  useEffect(() => {
+    // Reset state when campus or date changes
+    setUsers([])
+    setCurrentPage(1)
+    setHasMoreUsers(true)
+    fetchUsers(1, false)
   }, [campus_name, begin_at])
+
+  const loadMoreUsers = () => {
+    const nextPage = currentPage + 1
+    setCurrentPage(nextPage)
+    fetchUsers(nextPage, true)
+  }
 
   const staticPromoList: { [key: string]: string } = {
     "2025-09": "2025-09",
@@ -113,7 +165,7 @@ function Home() {
   }
 
   const getRankBadge = (rank: number | string) => {
-    const numericRank = Number(rank) // Explicitly convert to number
+    const numericRank = Number(rank)
     if (isNaN(numericRank)) {
       console.warn("getRankBadge received non-numeric rank after conversion:", rank, "Converted to:", numericRank)
       return "N/A"
@@ -131,7 +183,9 @@ function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-white">Pool Rankings - {campus_name || "Tétouan"}</h1>
-            {totalUsers > 0 && <div className="text-slate-400 text-sm">Total: {totalUsers} poolers</div>}
+            <div className="text-slate-400 text-sm">
+              Showing {users.length} {hasMoreUsers ? `of ${totalUsers}+` : `of ${users.length}`} poolers
+            </div>
           </div>
         </div>
       </div>
@@ -198,43 +252,72 @@ function Home() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
-            {users.map((user) => {
-              // Log user data right before rendering
-              console.log(
-                `User: ${user.login}, Order: ${user.order} (Type: ${typeof user.order}), Level: ${user.lvl} (Type: ${typeof user.lvl})`,
-              )
-              return (
-                <a
-                  key={user.order}
-                  href={`https://profile.intra.42.fr/users/${user.login}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-lg p-4 transition-colors duration-200"
+          <>
+            <div className="space-y-3">
+              {users.map((user, index) => {
+                const rankNumber = typeof user.order === "number" ? user.order : index + 1
+                console.log(`Rendering user: ${user.login}, Rank: ${rankNumber}`)
+
+                return (
+                  <a
+                    key={user.id || index}
+                    href={`https://profile.intra.42.fr/users/${user.login}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-lg p-4 transition-colors duration-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold">
+                          {getRankBadge(rankNumber)}
+                        </div>
+                        <img
+                          className="w-12 h-12 rounded-lg object-cover border border-slate-600"
+                          src={user.image || "/cat.png"}
+                          alt={user.login}
+                        />
+                        <div>
+                          <h3 className="text-white font-medium">{user.login}</h3>
+                          <p className="text-slate-400 text-sm">Rank {getRankBadge(rankNumber)}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-white font-bold text-lg">LVL {user.lvl}</div>
+                      </div>
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+
+            {/* Load More Button */}
+            {hasMoreUsers && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={loadMoreUsers}
+                  disabled={isLoading}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0 w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold">
-                        {getRankBadge(user.order)}
-                      </div>
-                      <img
-                        className="w-12 h-12 rounded-lg object-cover border border-slate-600"
-                        src={user.image || "/cat.png"}
-                        alt={user.login}
-                      />
-                      <div>
-                        <h3 className="text-white font-medium">{user.login}</h3>
-                        <p className="text-slate-400 text-sm">Rank {getRankBadge(user.order)}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-white font-bold text-lg">LVL {user.lvl}</div>
-                    </div>
-                  </div>
-                </a>
-              )
-            })}
-          </div>
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    <>📄 Load More Users</>
+                  )}
+                </button>
+                <p className="text-slate-400 text-sm mt-2">Showing {users.length} users • Click to load 100 more</p>
+              </div>
+            )}
+
+            {/* End of results message */}
+            {!hasMoreUsers && users.length > 0 && (
+              <div className="text-center mt-8 py-6 border-t border-slate-700">
+                <p className="text-slate-400">🎉 You've reached the end! Showing all {users.length} users.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -242,7 +325,7 @@ function Home() {
       <div ref={loading} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 hidden">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white">Loading all rankings...</p>
+          <p className="text-white">Loading rankings...</p>
           <p className="text-slate-400 text-sm mt-2">This may take a moment</p>
         </div>
       </div>
@@ -251,4 +334,3 @@ function Home() {
 }
 
 export default Home
-

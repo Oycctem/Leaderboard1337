@@ -12,7 +12,7 @@ function Login() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
-            <img className="w-10 h-10 filter brightness-0 invert" src="/42_logo.png" alt="42 Logo" />
+            <img className="w-10 h-10 filter brightness-0 invert" src="/gari.png" alt="42 Logo" />
           </div>
         </div>
 
@@ -39,7 +39,6 @@ function Login() {
         <div className="pt-6 space-y-2 text-sm text-slate-500">
           <p>• Real-time rankings</p>
           <p>• Multiple campus support</p>
-          <p>• Historical data</p>
         </div>
       </div>
     </main>

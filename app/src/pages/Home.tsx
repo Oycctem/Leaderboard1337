@@ -170,10 +170,7 @@ function Home() {
       console.warn("getRankBadge received non-numeric rank after conversion:", rank, "Converted to:", numericRank)
       return "N/A"
     }
-    if (numericRank === 1) return "1🥇"
-    if (numericRank === 2) return "2🥈"
-    if (numericRank === 3) return "3🥉"
-    return `    ${numericRank}`
+    return `${numericRank}`
   }
 
   return (

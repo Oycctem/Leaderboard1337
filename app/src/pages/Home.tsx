@@ -173,7 +173,7 @@ function Home() {
     if (numericRank === 1) return "1🥇"
     if (numericRank === 2) return "2🥈"
     if (numericRank === 3) return "3🥉"
-    return `${numericRank}`
+    return `    ${numericRank}`
   }
 
   return (

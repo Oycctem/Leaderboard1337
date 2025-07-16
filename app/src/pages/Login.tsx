@@ -12,7 +12,7 @@ function Login() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
-            <img className="w-10 h-10 filter brightness-0 invert" src="/gari.png" alt="42 Logo" />
+            <img className="w-10 h-10 filter brightness-0 invert" src="/gari1.svg.png" alt="42 Logo" />
           </div>
         </div>
 

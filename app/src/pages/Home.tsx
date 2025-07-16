@@ -30,7 +30,7 @@ function Home() {
 
   // Only 4 campuses as requested
   const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([
-    { id: 55, name: "Tétouan" },
+    { id: 55, name: "Tetouan" },
     { id: 75, name: "Rabat" },
     { id: 21, name: "Benguerir" },
     { id: 16, name: "Khouribga" },

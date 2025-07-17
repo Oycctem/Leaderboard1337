@@ -32,6 +32,7 @@ interface UserData {
   login: string
   image: string
   lvl: string // Changed to string to match toFixed(2) output
+  campus?: string // Add campus info for all campuses view
 }
 
 // Initialize the databases
@@ -132,7 +133,7 @@ const CAMPUS_ID_MAP: { [key: string]: number } = {
   Khouribga: 16,
 }
 
-// Updated route to fetch ALL users at once
+// Updated route to fetch users from single campus or all campuses
 router.post("/cursus_users", async (context) => {
   const body = await context.request.body().value
   const firstDay = body.query.firstDay
@@ -140,69 +141,118 @@ router.post("/cursus_users", async (context) => {
   const token = body.query.token
   const campus_name = body.query.campus_name
 
-  const campus_id = CAMPUS_ID_MAP[campus_name as string] || 55 // Default to Tétouan if not found
-
   try {
     let allUsers: any[] = []
-    let page = 1
-    let hasMoreData = true
 
-    // Fetch all pages
-    while (hasMoreData) {
-      // Changed per_page to 400
-      const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campus_id}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=400&sort=-level`
+    if (campus_name === "All") {
+      // Fetch from all campuses
+      for (const [campusName, campusId] of Object.entries(CAMPUS_ID_MAP)) {
+        console.log(`Fetching users from ${campusName} (ID: ${campusId})`)
 
-      const response = await fetch(`${BASE_URL}${endPoint}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
+        let page = 1
+        let hasMoreData = true
 
-      const data = await response.json()
+        while (hasMoreData) {
+          const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campusId}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=400&sort=-level`
 
-      // Ensure data is an array before processing
-      if (!Array.isArray(data)) {
-        console.error("Received non-array data from 42 API:", data)
-        hasMoreData = false // Stop fetching if unexpected data
-        continue
+          const response = await fetch(`${BASE_URL}${endPoint}`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          })
+
+          const data = await response.json()
+
+          if (!Array.isArray(data)) {
+            console.error(`Received non-array data from 42 API for ${campusName}:`, data)
+            hasMoreData = false
+            continue
+          }
+
+          if (data.length === 0) {
+            hasMoreData = false
+          } else {
+            // Add campus info to each user
+            const usersWithCampus = data.map((user: any) => ({
+              ...user,
+              campus_name: campusName,
+            }))
+            allUsers = allUsers.concat(usersWithCampus)
+            page++
+          }
+
+          // Safety check to prevent infinite loops
+          if (page > 15) {
+            console.warn(`Reached page limit (15) for ${campusName}. Some users might not be included.`)
+            hasMoreData = false
+          }
+        }
       }
 
-      if (data.length === 0) {
-        hasMoreData = false
-      } else {
-        allUsers = allUsers.concat(data)
-        page++
-      }
+      // Sort all users by level across all campuses
+      allUsers.sort((a, b) => (b.level || 0) - (a.level || 0))
+    } else {
+      // Fetch from single campus (existing logic)
+      const campus_id = CAMPUS_ID_MAP[campus_name as string] || 55
 
-      // Safety check to prevent infinite loops (max 15 pages = 6000 users with per_page=400)
-      if (page > 15) {
-        console.warn("Reached page limit (15) for fetching users. Some users might not be included.")
-        hasMoreData = false
+      let page = 1
+      let hasMoreData = true
+
+      while (hasMoreData) {
+        const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campus_id}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=400&sort=-level`
+
+        const response = await fetch(`${BASE_URL}${endPoint}`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+
+        const data = await response.json()
+
+        if (!Array.isArray(data)) {
+          console.error("Received non-array data from 42 API:", data)
+          hasMoreData = false
+          continue
+        }
+
+        if (data.length === 0) {
+          hasMoreData = false
+        } else {
+          allUsers = allUsers.concat(data)
+          page++
+        }
+
+        if (page > 15) {
+          console.warn("Reached page limit (15) for fetching users. Some users might not be included.")
+          hasMoreData = false
+        }
       }
     }
 
     let tempUsers: UserData[] = []
     try {
-      // Map all users with correct ranking, adding robust checks
+      // Map all users with correct ranking
       tempUsers = allUsers.map((user: any, index: number) => ({
-        id: user?.user?.id || null, // Ensure ID is not undefined
-        order: index + 1, // This will always be a number
+        id: user?.user?.id || null,
+        order: index + 1,
         login: user?.user?.login || "N/A",
         image: user?.user?.image?.versions?.medium || "/cat.png",
-        lvl: user?.level !== undefined && user.level !== null ? Number.parseFloat(user.level).toFixed(2) : "0.00", // Ensure level is a number before toFixed
+        lvl: user?.level !== undefined && user.level !== null ? Number.parseFloat(user.level).toFixed(2) : "0.00",
+        campus: user?.campus_name || campus_name, // Include campus info
       }))
-      console.log("Backend sending tempUsers:", tempUsers) // Log the data being sent
+      console.log("Backend sending tempUsers:", tempUsers)
     } catch (mapError) {
       console.error("Error during user data mapping:", mapError)
-      // If mapping fails, send an empty array or an error message
       context.response.body = {
         status: 500,
         data: [],
         message: "Error processing user data on server.",
       }
-      return // Exit early
+      return
     }
 
     context.response.body = {
@@ -215,7 +265,7 @@ router.post("/cursus_users", async (context) => {
     console.error("Error fetching or processing cursus users:", error)
     context.response.body = {
       status: 400,
-      data: [], // Send empty array on error
+      data: [],
       message: "Failed to fetch users: " + error.message,
     }
   }
@@ -223,10 +273,13 @@ router.post("/cursus_users", async (context) => {
 
 // Add this new route after the existing routes:
 router.get("/campuses", async (context) => {
-  const availableCampuses = Object.entries(CAMPUS_ID_MAP).map(([name, id]) => ({
-    id,
-    name,
-  }))
+  const availableCampuses = [
+    { id: 0, name: "All" }, // Add "All" option
+    ...Object.entries(CAMPUS_ID_MAP).map(([name, id]) => ({
+      id,
+      name,
+    })),
+  ]
 
   context.response.body = {
     status: 200,
@@ -244,4 +297,3 @@ app.use(router.allowedMethods())
 // Start the server
 console.log("Server is running on localhost:8000")
 await app.listen({ port: 8000 })
-

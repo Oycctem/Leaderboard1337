@@ -11,6 +11,7 @@ interface User {
   login: string
   image?: string
   lvl: string
+  campus?: string
 }
 
 interface Campus {
@@ -28,8 +29,9 @@ function Home() {
   var { campus_name, begin_at } = useParams()
   const token: string = localStorage.getItem("token") || ""
 
-  // Only 4 campuses as requested
+  // Include "All" option in campuses
   const [availableCampuses, setAvailableCampuses] = useState<Campus[]>([
+    { id: 0, name: "All" },
     { id: 55, name: "Tetouan" },
     { id: 75, name: "Rabat" },
     { id: 21, name: "Benguerir" },
@@ -212,6 +214,22 @@ function Home() {
     }
   }
 
+  // Get campus badge color
+  const getCampusBadgeColor = (campusName: string) => {
+    switch (campusName) {
+      case "Tétouan":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "Rabat":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "Benguerir":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      case "Khouribga":
+        return "bg-orange-100 text-orange-800 border-orange-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
+    }
+  }
+
   const topThree = users.slice(0, 3)
   const remainingUsers = users.slice(3)
 
@@ -227,7 +245,9 @@ function Home() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-slate-900">Pool Leaderboard</h1>
-                <p className="text-slate-600">{campus_name || "Tétouan"} Campus</p>
+                <p className="text-slate-600">
+                  {campus_name === "All" ? "All Campuses" : `${campus_name || "Tétouan"} Campus`}
+                </p>
               </div>
             </div>
             <div className="text-right">
@@ -251,7 +271,7 @@ function Home() {
           >
             {availableCampuses.map((campus) => (
               <option key={campus.id} value={campus.name}>
-                {campus.name}
+                {campus.name === "All" ? "🌍 All Campuses" : `🏫 ${campus.name}`}
               </option>
             ))}
           </select>
@@ -347,7 +367,16 @@ function Home() {
                               {/* User Info */}
                               <div className="text-center">
                                 <h3 className="text-slate-900 font-bold text-lg mb-1">{user.login}</h3>
-                                <div className="text-xl font-bold text-blue-600">Level {user.lvl}</div>
+                                <div className="text-xl font-bold text-blue-600 mb-2">Level {user.lvl}</div>
+
+                                {/* Campus Badge for All Campuses view */}
+                                {campus_name === "All" && user.campus && (
+                                  <div
+                                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium border ${getCampusBadgeColor(user.campus)}`}
+                                  >
+                                    {user.campus}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </a>
@@ -403,7 +432,17 @@ function Home() {
 
                             {/* User Info */}
                             <div>
-                              <h3 className="text-slate-900 font-semibold text-lg">{user.login}</h3>
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="text-slate-900 font-semibold text-lg">{user.login}</h3>
+                                {/* Campus Badge for All Campuses view */}
+                                {campus_name === "All" && user.campus && (
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium border ${getCampusBadgeColor(user.campus)}`}
+                                  >
+                                    {user.campus}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-slate-500 text-sm">Rank #{getRankBadge(rankNumber)}</p>
                             </div>
                           </div>
@@ -459,7 +498,8 @@ function Home() {
                 <div className="text-4xl mb-4">🎉</div>
                 <p className="text-slate-700 text-lg font-medium mb-2">All done!</p>
                 <p className="text-slate-500">
-                  Showing all {users.length} poolers from {campus_name}
+                  Showing all {users.length} poolers{" "}
+                  {campus_name === "All" ? "from all campuses" : `from ${campus_name}`}
                 </p>
               </div>
             )}
@@ -475,7 +515,7 @@ function Home() {
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <h3 className="text-slate-900 text-xl font-semibold mb-2">Loading Rankings...</h3>
-          <p className="text-slate-600">Please wait</p>
+          <p className="text-slate-600">{campus_name === "All" ? "Fetching from all campuses..." : "Please wait"}</p>
         </div>
       </div>
     </main>

@@ -25,6 +25,7 @@ function Home() {
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [hasMoreUsers, setHasMoreUsers] = useState(true)
+  const [userDetails, setUserDetails] = useState<{ [key: string]: any }>({})
   const loading = useRef<HTMLDivElement>(null)
   var { campus_name, begin_at } = useParams()
   const token: string = localStorage.getItem("token") || ""
@@ -52,6 +53,35 @@ function Home() {
 
     fetchCampuses()
   }, [])
+
+  // Function to fetch user details from 42 API
+  const fetchUserDetails = async (login: string) => {
+    if (userDetails[login]) return userDetails[login]
+
+    try {
+      const response = await fetch(`https://api.intra.42.fr/v2/users/${login}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        const userData = await response.json()
+        const fullName = `${userData.first_name} ${userData.last_name}`
+        setUserDetails((prev) => ({
+          ...prev,
+          [login]: { ...userData, fullName },
+        }))
+        return { ...userData, fullName }
+      }
+    } catch (error) {
+      console.error(`Error fetching details for ${login}:`, error)
+    }
+
+    return null
+  }
 
   const fetchUsers = async (page = 1, append = false) => {
     if (!append) {
@@ -104,6 +134,13 @@ function Home() {
           setTotalUsers(data.total || processedUsers.length)
         }
 
+        // Fetch user details for the new users
+        processedUsers.forEach((user: User) => {
+          if (user.login && user.login !== "N/A") {
+            fetchUserDetails(user.login)
+          }
+        })
+
         // Check if there are more users to load
         setHasMoreUsers(processedUsers.length === 100)
       } else {
@@ -136,6 +173,7 @@ function Home() {
   useEffect(() => {
     // Reset state when campus or date changes
     setUsers([])
+    setUserDetails({})
     setCurrentPage(1)
     setHasMoreUsers(true)
     fetchUsers(1, false)
@@ -211,6 +249,11 @@ function Home() {
       default:
         return ""
     }
+  }
+
+  const getUserDisplayName = (user: User) => {
+    const details = userDetails[user.login]
+    return details?.fullName || user.login
   }
 
   const topThree = users.slice(0, 3)
@@ -348,8 +391,9 @@ function Home() {
                               {/* User Info */}
                               <div className="text-center">
                                 <h3 className="text-slate-900 font-bold text-sm sm:text-lg mb-1 truncate">
-                                  {user.login}
+                                  {getUserDisplayName(user)}
                                 </h3>
+                                <div className="text-xs sm:text-sm text-slate-500 mb-1">@{user.login}</div>
                                 <div className="text-sm sm:text-xl font-bold text-blue-600">Level {user.lvl}</div>
                               </div>
                             </div>
@@ -406,8 +450,10 @@ function Home() {
 
                             {/* User Info */}
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-slate-900 font-semibold text-sm sm:text-lg truncate">{user.login}</h3>
-                              <p className="text-slate-500 text-xs sm:text-sm">Rank #{getRankBadge(rankNumber)}</p>
+                              <h3 className="text-slate-900 font-semibold text-sm sm:text-lg truncate">
+                                {getUserDisplayName(user)}
+                              </h3>
+                              <p className="text-slate-500 text-xs sm:text-sm">@{user.login}</p>
                             </div>
                           </div>
 

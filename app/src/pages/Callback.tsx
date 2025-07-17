@@ -45,17 +45,51 @@ function Callback() {
   }, [])
 
   return (
-    <main className="min-h-screen flex flex-col justify-center items-center bg-slate-900">
-      <div className="text-center space-y-6">
-        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <div className="space-y-2">
-          <h2 className="text-xl font-medium text-white">Authenticating...</h2>
-          <p className="text-slate-400">Please wait</p>
+    <main className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative z-10 text-center space-y-8 max-w-md mx-auto">
+        <div className="glass rounded-2xl p-8">
+          {/* Enhanced loading spinner */}
+          <div className="relative mb-6">
+            <div className="loading-spinner mx-auto"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-bold">42</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold gradient-text">Authenticating</h2>
+            <p className="text-slate-400">Connecting to 42 Intranet...</p>
+
+            {/* Progress steps */}
+            <div className="space-y-2 text-sm text-slate-500">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Received authorization code</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span>Exchanging for access token</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-2 h-2 bg-slate-600 rounded-full"></div>
+                <span>Fetching user profile</span>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <p className="text-xs text-slate-600">This should only take a moment...</p>
       </div>
     </main>
   )
 }
 
 export default Callback
-

@@ -173,87 +173,225 @@ function Home() {
     return `${numericRank}`
   }
 
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return "🥇"
+      case 2:
+        return "🥈"
+      case 3:
+        return "🥉"
+      default:
+        return ""
+    }
+  }
+
+  const getRankBadgeClass = (rank: number) => {
+    const baseClass = "flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-lg"
+    switch (rank) {
+      case 1:
+        return `${baseClass} rank-badge-1`
+      case 2:
+        return `${baseClass} rank-badge-2`
+      case 3:
+        return `${baseClass} rank-badge-3`
+      default:
+        return `${baseClass} rank-badge`
+    }
+  }
+
+  const getCardClass = (rank: number) => {
+    const baseClass = "block leaderboard-card rounded-xl p-6 transition-all duration-300 stagger-item"
+    if (rank <= 3) {
+      return `${baseClass} top-performer rank-${rank}`
+    }
+    return baseClass
+  }
+
+  const getLevelColor = (level: string) => {
+    const numLevel = Number.parseFloat(level)
+    if (numLevel >= 10) return "text-purple-400"
+    if (numLevel >= 7) return "text-blue-400"
+    if (numLevel >= 5) return "text-green-400"
+    if (numLevel >= 3) return "text-yellow-400"
+    return "text-gray-400"
+  }
+
+  const getLevelProgress = (level: string) => {
+    const numLevel = Number.parseFloat(level)
+    const progress = (numLevel % 1) * 100
+    return progress
+  }
+
   return (
-    <main className="min-h-screen bg-slate-900">
-      {/* Header */}
-      <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
-        <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Header with improved styling */}
+      <div className="glass border-b border-blue-500/20 px-6 py-6">
+        <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Pool Rankings - {campus_name || "Tétouan"}</h1>
-            <div className="text-slate-400 text-sm">
-              Showing {users.length} {hasMoreUsers ? `of ${totalUsers}+` : `of ${users.length}`} poolers
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🏆</span>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold gradient-text">Pool Leaderboard</h1>
+                <p className="text-slate-400 text-sm">
+                  <span className="code-decoration">1337</span> • {campus_name || "Tétouan"} Campus
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-white">{users.length}</div>
+              <div className="text-slate-400 text-sm">{hasMoreUsers ? `of ${totalUsers}+` : "total"} poolers</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="bg-slate-800/50 border-b border-slate-700 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex flex-wrap items-center gap-4">
-          <select
-            value={campus_name || "Tétouan"}
-            onChange={(e) => {
-              const selectedCampus = e.target.value
-              location.href = `/${selectedCampus}/${begin_at}`
-            }}
-            className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
-          >
-            {availableCampuses.map((campus) => (
-              <option key={campus.id} value={campus.name}>
-                {campus.name}
-              </option>
-            ))}
-          </select>
+      {/* Enhanced Controls */}
+      <div className="glass border-b border-blue-500/10 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-slate-400 text-sm">🏫</span>
+            <select
+              value={campus_name || "Tétouan"}
+              onChange={(e) => {
+                const selectedCampus = e.target.value
+                location.href = `/${selectedCampus}/${begin_at}`
+              }}
+              className="bg-slate-800/80 border border-slate-600/50 text-white rounded-lg px-4 py-2 text-sm backdrop-blur-sm hover:border-blue-500/50 transition-colors"
+            >
+              {availableCampuses.map((campus) => (
+                <option key={campus.id} value={campus.name}>
+                  {campus.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <select
-            onChange={(e) => {
-              location.href = `/${campus_name || "Tétouan"}/${e.target.value}`
-            }}
-            className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm"
-          >
-            <option value="0">Select Promo</option>
-            {Object.entries(staticPromoList).map(([key, value]) => {
-              if (value === "---") {
+          <div className="flex items-center space-x-2">
+            <span className="text-slate-400 text-sm">📅</span>
+            <select
+              onChange={(e) => {
+                location.href = `/${campus_name || "Tétouan"}/${e.target.value}`
+              }}
+              className="bg-slate-800/80 border border-slate-600/50 text-white rounded-lg px-4 py-2 text-sm backdrop-blur-sm hover:border-blue-500/50 transition-colors"
+            >
+              <option value="0">Select Promo</option>
+              {Object.entries(staticPromoList).map(([key, value]) => {
+                if (value === "---") {
+                  return (
+                    <option disabled key={key} value={value}>
+                      {value}
+                    </option>
+                  )
+                }
                 return (
-                  <option disabled key={key} value={value}>
-                    {value}
+                  <option key={key} value={value}>
+                    Pool {value}
                   </option>
                 )
-              }
-              return (
-                <option key={key} value={value}>
-                  {value}
-                </option>
-              )
-            })}
-          </select>
+              })}
+            </select>
+          </div>
 
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+            className="btn-secondary px-4 py-2 rounded-lg text-sm flex items-center space-x-2 hover-glow"
           >
-            🔄 Refresh
+            <span>🔄</span>
+            <span>Refresh</span>
           </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-6">
+      {/* Content with improved layout */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
         {users.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">😔</div>
-            <h2 className="text-xl font-medium text-white mb-2">No Users Found</h2>
-            <p className="text-slate-400 mb-6">Try selecting a different campus or promo</p>
-            <Link to="/login" className="btn-primary">
-              Back to Login
+          <div className="text-center py-20 slide-in">
+            <div className="w-24 h-24 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl">😔</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-3">No Poolers Found</h2>
+            <p className="text-slate-400 mb-8 max-w-md mx-auto">
+              It looks like there are no students in this pool yet. Try selecting a different campus or promo period.
+            </p>
+            <Link to="/login" className="btn-primary inline-flex items-center space-x-2">
+              <span>←</span>
+              <span>Back to Login</span>
             </Link>
           </div>
         ) : (
           <>
-            <div className="space-y-3">
+            {/* Top 3 Podium */}
+            {users.length >= 3 && (
+              <div className="mb-12">
+                <h2 className="text-2xl font-bold text-center mb-8 gradient-text">🏆 Top Performers</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                  {/* 2nd Place */}
+                  <div className="order-1 md:order-1">
+                    <div className="glass rounded-2xl p-6 text-center hover-glow">
+                      <div className="w-20 h-20 mx-auto mb-4 relative">
+                        <img
+                          className="w-20 h-20 rounded-full object-cover border-4 border-silver-400"
+                          src={users[1]?.image || "/cat.png"}
+                          alt={users[1]?.login}
+                        />
+                        <div className="absolute -top-2 -right-2 text-2xl">🥈</div>
+                      </div>
+                      <h3 className="text-xl font-bold gradient-text-silver mb-2">{users[1]?.login}</h3>
+                      <div className="text-3xl font-bold text-white mb-2">LVL {users[1]?.lvl}</div>
+                      <div className="text-sm text-slate-400">#2 Runner-up</div>
+                    </div>
+                  </div>
+
+                  {/* 1st Place */}
+                  <div className="order-2 md:order-2 md:-mt-8">
+                    <div className="glass rounded-2xl p-8 text-center hover-glow pulse-glow">
+                      <div className="w-24 h-24 mx-auto mb-4 relative">
+                        <img
+                          className="w-24 h-24 rounded-full object-cover border-4 border-yellow-400"
+                          src={users[0]?.image || "/cat.png"}
+                          alt={users[0]?.login}
+                        />
+                        <div className="absolute -top-3 -right-3 text-3xl">👑</div>
+                      </div>
+                      <h3 className="text-2xl font-bold gradient-text-gold mb-3">{users[0]?.login}</h3>
+                      <div className="text-4xl font-bold text-white mb-3">LVL {users[0]?.lvl}</div>
+                      <div className="text-sm text-yellow-400 font-medium">🏆 Champion</div>
+                    </div>
+                  </div>
+
+                  {/* 3rd Place */}
+                  <div className="order-3 md:order-3">
+                    <div className="glass rounded-2xl p-6 text-center hover-glow">
+                      <div className="w-20 h-20 mx-auto mb-4 relative">
+                        <img
+                          className="w-20 h-20 rounded-full object-cover border-4 border-orange-400"
+                          src={users[2]?.image || "/cat.png"}
+                          alt={users[2]?.login}
+                        />
+                        <div className="absolute -top-2 -right-2 text-2xl">🥉</div>
+                      </div>
+                      <h3 className="text-xl font-bold gradient-text-bronze mb-2">{users[2]?.login}</h3>
+                      <div className="text-3xl font-bold text-white mb-2">LVL {users[2]?.lvl}</div>
+                      <div className="text-sm text-slate-400">#3 Third Place</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Full Leaderboard */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center space-x-2">
+                <span>📊</span>
+                <span>Full Rankings</span>
+              </h2>
+
               {users.map((user, index) => {
                 const rankNumber = typeof user.order === "number" ? user.order : index + 1
-                console.log(`Rendering user: ${user.login}, Rank: ${rankNumber}`)
+                const levelProgress = getLevelProgress(user.lvl)
 
                 return (
                   <a
@@ -261,25 +399,50 @@ function Home() {
                     href={`https://profile.intra.42.fr/users/${user.login}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="block bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-lg p-4 transition-colors duration-200"
+                    className={getCardClass(rankNumber)}
+                    style={{ animationDelay: `${(index % 10) * 0.1}s` }}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-white font-bold">
-                          {getRankBadge(rankNumber)}
+                      <div className="flex items-center space-x-6">
+                        <div className={getRankBadgeClass(rankNumber)}>
+                          <span>{getRankIcon(rankNumber) || getRankBadge(rankNumber)}</span>
                         </div>
-                        <img
-                          className="w-12 h-12 rounded-lg object-cover border border-slate-600"
-                          src={user.image || "/cat.png"}
-                          alt={user.login}
-                        />
-                        <div>
-                          <h3 className="text-white font-medium">{user.login}</h3>
-                          <p className="text-slate-400 text-sm">Rank {getRankBadge(rankNumber)}</p>
+
+                        <div className="relative">
+                          <img
+                            className="w-16 h-16 rounded-xl object-cover border-2 border-slate-600/50"
+                            src={user.image || "/cat.png"}
+                            alt={user.login}
+                          />
+                          {rankNumber <= 10 && (
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-xs font-bold">
+                              ⭐
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="text-xl font-bold text-white">{user.login}</h3>
+                            <span className="px-2 py-1 bg-slate-700/50 rounded-md text-xs text-slate-300">
+                              #{getRankBadge(rankNumber)}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <span className="text-slate-400 text-sm">Level Progress</span>
+                            <div className="flex-1 max-w-32 bg-slate-700/50 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="level-progress h-full transition-all duration-1000"
+                                style={{ width: `${levelProgress}%` }}
+                              ></div>
+                            </div>
+                          </div>
                         </div>
                       </div>
+
                       <div className="text-right">
-                        <div className="text-white font-bold text-lg">LVL {user.lvl}</div>
+                        <div className={`text-3xl font-bold mb-1 ${getLevelColor(user.lvl)}`}>{user.lvl}</div>
+                        <div className="text-slate-400 text-sm">Level</div>
                       </div>
                     </div>
                   </a>
@@ -287,43 +450,65 @@ function Home() {
               })}
             </div>
 
-            {/* Load More Button */}
+            {/* Enhanced Load More Button */}
             {hasMoreUsers && (
-              <div className="text-center mt-8">
+              <div className="text-center mt-12">
                 <button
                   onClick={loadMoreUsers}
                   disabled={isLoading}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200 flex items-center gap-2 mx-auto"
+                  className="btn-primary px-8 py-4 rounded-xl font-medium transition-all duration-300 flex items-center gap-3 mx-auto hover-glow disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Loading...
+                      <div className="loading-spinner w-5 h-5"></div>
+                      <span>Loading more poolers...</span>
                     </>
                   ) : (
-                    <>📄 Load More Users</>
+                    <>
+                      <span>📄</span>
+                      <span>Load More Poolers</span>
+                      <span className="bg-white/20 px-2 py-1 rounded-md text-sm">+100</span>
+                    </>
                   )}
                 </button>
-                <p className="text-slate-400 text-sm mt-2">Showing {users.length} users • Click to load 100 more</p>
+                <p className="text-slate-400 text-sm mt-4">
+                  Showing <span className="text-blue-400 font-medium">{users.length}</span> poolers • Click to load 100
+                  more
+                </p>
               </div>
             )}
 
             {/* End of results message */}
             {!hasMoreUsers && users.length > 0 && (
-              <div className="text-center mt-8 py-6 border-t border-slate-700">
-                <p className="text-slate-400">🎉 You've reached the end! Showing all {users.length} Poolers.</p>
+              <div className="text-center mt-12 py-8 border-t border-slate-700/50">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🎉</span>
+                </div>
+                <p className="text-xl font-medium text-white mb-2">That's everyone!</p>
+                <p className="text-slate-400">
+                  You've seen all <span className="text-green-400 font-medium">{users.length}</span> poolers in this
+                  ranking.
+                </p>
               </div>
             )}
           </>
         )}
       </div>
 
-      {/* Loading overlay */}
-      <div ref={loading} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 hidden">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white">Loading rankings...</p>
-          <p className="text-slate-400 text-sm mt-2">This may take a moment</p>
+      {/* Enhanced loading overlay */}
+      <div
+        ref={loading}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm hidden"
+      >
+        <div className="glass rounded-2xl p-8 text-center max-w-sm mx-4">
+          <div className="loading-spinner mx-auto mb-6"></div>
+          <h3 className="text-xl font-bold text-white mb-2">Loading Rankings</h3>
+          <p className="text-slate-400 text-sm mb-4">Fetching the latest pool data...</p>
+          <div className="flex items-center justify-center space-x-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
+            <div className="w-2 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+          </div>
         </div>
       </div>
     </main>

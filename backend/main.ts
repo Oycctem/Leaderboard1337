@@ -31,8 +31,8 @@ interface UserData {
   order: number
   login: string
   image: string
-  lvl: string // Changed to string to match toFixed(2) output
-  campus?: string // Add campus info for all campuses view
+  lvl: string
+  campus?: string
 }
 
 // Initialize the databases
@@ -133,7 +133,7 @@ const CAMPUS_ID_MAP: { [key: string]: number } = {
   Khouribga: 16,
 }
 
-// Updated route to fetch users from single campus or all campuses
+// Updated route to fetch users from single campus only
 router.post("/cursus_users", async (context) => {
   const body = await context.request.body().value
   const firstDay = body.query.firstDay
@@ -144,105 +144,41 @@ router.post("/cursus_users", async (context) => {
   try {
     let allUsers: any[] = []
 
-    if (campus_name === "All") {
-      // Fetch from all campuses
-      for (const [campusName, campusId] of Object.entries(CAMPUS_ID_MAP)) {
-        console.log(`Fetching users from ${campusName} (ID: ${campusId})`)
+    // Fetch from single campus only
+    const campus_id = CAMPUS_ID_MAP[campus_name as string] || 55
 
-        let page = 1
-        let hasMoreData = true
+    let page = 1
+    let hasMoreData = true
 
-        while (hasMoreData) {
-          const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campusId}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=100&sort=-level`
+    while (hasMoreData) {
+      const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campus_id}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=400&sort=-level`
 
-          try {
-            const response = await fetch(`${BASE_URL}${endPoint}`, {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            })
+      const response = await fetch(`${BASE_URL}${endPoint}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
 
-            if (!response.ok) {
-              console.error(`HTTP error for ${campusName}: ${response.status}`)
-              hasMoreData = false
-              continue
-            }
+      const data = await response.json()
 
-            const data = await response.json()
-
-            if (!Array.isArray(data)) {
-              console.error(`Received non-array data from 42 API for ${campusName}:`, data)
-              hasMoreData = false
-              continue
-            }
-
-            if (data.length === 0) {
-              hasMoreData = false
-            } else {
-              // Add campus info to each user
-              const usersWithCampus = data.map((user: any) => ({
-                ...user,
-                campus_name: campusName,
-              }))
-              allUsers = allUsers.concat(usersWithCampus)
-              console.log(`Added ${data.length} users from ${campusName}. Total users: ${allUsers.length}`)
-              page++
-            }
-
-            // Safety check to prevent infinite loops
-            if (page > 10) {
-              console.warn(`Reached page limit (10) for ${campusName}. Some users might not be included.`)
-              hasMoreData = false
-            }
-          } catch (fetchError) {
-            console.error(`Error fetching from ${campusName}:`, fetchError)
-            hasMoreData = false
-          }
-        }
+      if (!Array.isArray(data)) {
+        console.error("Received non-array data from 42 API:", data)
+        hasMoreData = false
+        continue
       }
 
-      // Sort all users by level across all campuses
-      allUsers.sort((a, b) => (b.level || 0) - (a.level || 0))
-      console.log(`Total users from all campuses: ${allUsers.length}`)
-    } else {
-      // Fetch from single campus (existing logic)
-      const campus_id = CAMPUS_ID_MAP[campus_name as string] || 55
+      if (data.length === 0) {
+        hasMoreData = false
+      } else {
+        allUsers = allUsers.concat(data)
+        page++
+      }
 
-      let page = 1
-      let hasMoreData = true
-
-      while (hasMoreData) {
-        const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campus_id}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=400&sort=-level`
-
-        const response = await fetch(`${BASE_URL}${endPoint}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
-
-        const data = await response.json()
-
-        if (!Array.isArray(data)) {
-          console.error("Received non-array data from 42 API:", data)
-          hasMoreData = false
-          continue
-        }
-
-        if (data.length === 0) {
-          hasMoreData = false
-        } else {
-          allUsers = allUsers.concat(data)
-          page++
-        }
-
-        if (page > 15) {
-          console.warn("Reached page limit (15) for fetching users. Some users might not be included.")
-          hasMoreData = false
-        }
+      if (page > 15) {
+        console.warn("Reached page limit (15) for fetching users. Some users might not be included.")
+        hasMoreData = false
       }
     }
 
@@ -255,7 +191,7 @@ router.post("/cursus_users", async (context) => {
         login: user?.user?.login || "N/A",
         image: user?.user?.image?.versions?.medium || "/cat.png",
         lvl: user?.level !== undefined && user.level !== null ? Number.parseFloat(user.level).toFixed(2) : "0.00",
-        campus: campus_name === "All" ? user?.campus_name : campus_name, // Use campus_name for All view
+        campus: campus_name,
       }))
       console.log("Backend sending tempUsers:", tempUsers)
     } catch (mapError) {
@@ -284,15 +220,12 @@ router.post("/cursus_users", async (context) => {
   }
 })
 
-// Add this new route after the existing routes:
+// Updated campuses route without "All" option
 router.get("/campuses", async (context) => {
-  const availableCampuses = [
-    { id: 0, name: "All" }, // Add "All" option
-    ...Object.entries(CAMPUS_ID_MAP).map(([name, id]) => ({
-      id,
-      name,
-    })),
-  ]
+  const availableCampuses = Object.entries(CAMPUS_ID_MAP).map(([name, id]) => ({
+    id,
+    name,
+  }))
 
   context.response.body = {
     status: 200,

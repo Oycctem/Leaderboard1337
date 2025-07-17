@@ -153,39 +153,51 @@ router.post("/cursus_users", async (context) => {
         let hasMoreData = true
 
         while (hasMoreData) {
-          const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campusId}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=400&sort=-level`
+          const endPoint: string = `/v2/cursus/9/cursus_users?filter[campus_id]=${campusId}&range[begin_at]=${firstDay},${lastDay}&page=${page}&per_page=100&sort=-level`
 
-          const response = await fetch(`${BASE_URL}${endPoint}`, {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          })
+          try {
+            const response = await fetch(`${BASE_URL}${endPoint}`, {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            })
 
-          const data = await response.json()
+            if (!response.ok) {
+              console.error(`HTTP error for ${campusName}: ${response.status}`)
+              hasMoreData = false
+              continue
+            }
 
-          if (!Array.isArray(data)) {
-            console.error(`Received non-array data from 42 API for ${campusName}:`, data)
-            hasMoreData = false
-            continue
-          }
+            const data = await response.json()
 
-          if (data.length === 0) {
-            hasMoreData = false
-          } else {
-            // Add campus info to each user
-            const usersWithCampus = data.map((user: any) => ({
-              ...user,
-              campus_name: campusName,
-            }))
-            allUsers = allUsers.concat(usersWithCampus)
-            page++
-          }
+            if (!Array.isArray(data)) {
+              console.error(`Received non-array data from 42 API for ${campusName}:`, data)
+              hasMoreData = false
+              continue
+            }
 
-          // Safety check to prevent infinite loops
-          if (page > 15) {
-            console.warn(`Reached page limit (15) for ${campusName}. Some users might not be included.`)
+            if (data.length === 0) {
+              hasMoreData = false
+            } else {
+              // Add campus info to each user
+              const usersWithCampus = data.map((user: any) => ({
+                ...user,
+                campus_name: campusName,
+              }))
+              allUsers = allUsers.concat(usersWithCampus)
+              console.log(`Added ${data.length} users from ${campusName}. Total users: ${allUsers.length}`)
+              page++
+            }
+
+            // Safety check to prevent infinite loops
+            if (page > 10) {
+              console.warn(`Reached page limit (10) for ${campusName}. Some users might not be included.`)
+              hasMoreData = false
+            }
+          } catch (fetchError) {
+            console.error(`Error fetching from ${campusName}:`, fetchError)
             hasMoreData = false
           }
         }
@@ -193,6 +205,7 @@ router.post("/cursus_users", async (context) => {
 
       // Sort all users by level across all campuses
       allUsers.sort((a, b) => (b.level || 0) - (a.level || 0))
+      console.log(`Total users from all campuses: ${allUsers.length}`)
     } else {
       // Fetch from single campus (existing logic)
       const campus_id = CAMPUS_ID_MAP[campus_name as string] || 55
@@ -242,7 +255,7 @@ router.post("/cursus_users", async (context) => {
         login: user?.user?.login || "N/A",
         image: user?.user?.image?.versions?.medium || "/cat.png",
         lvl: user?.level !== undefined && user.level !== null ? Number.parseFloat(user.level).toFixed(2) : "0.00",
-        campus: user?.campus_name || campus_name, // Include campus info
+        campus: campus_name === "All" ? user?.campus_name : campus_name, // Use campus_name for All view
       }))
       console.log("Backend sending tempUsers:", tempUsers)
     } catch (mapError) {

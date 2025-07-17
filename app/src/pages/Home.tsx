@@ -87,6 +87,8 @@ function Home() {
       })
       const data = await response.json()
       console.log("Raw response from backend:", data)
+      console.log("Campus name being used:", campus_name)
+      console.log("Request body:", body)
 
       if (data.status === 200 && Array.isArray(data.data)) {
         // Calculate the correct order based on page and existing users
@@ -96,7 +98,8 @@ function Home() {
           order: startingOrder + index,
         }))
 
-        console.log("Processed users with correct order:", processedUsers)
+        console.log("Processed users with campus info:", processedUsers.slice(0, 5)) // Show first 5 users
+        console.log("Total users received:", processedUsers.length)
 
         if (append) {
           setUsers((prevUsers) => [...prevUsers, ...processedUsers])

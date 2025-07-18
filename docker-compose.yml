@@ -1,20 +1,14 @@
-version: '3.8'
-
 services:
   nginx:
     image: nginx:alpine
     ports:
       - "80:80"
-      - "443:443"
     restart: always
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro  # Mount SSL certificates
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - backend
       - frontend
-    networks:
-      - appnet
 
   backend:
     build:
@@ -28,8 +22,6 @@ services:
       - "8000"
     env_file:
       - backend/.env
-    networks:
-      - appnet
 
   frontend:
     image: node:18.19.0
@@ -44,9 +36,3 @@ services:
       - app/.env
     depends_on:
       - backend
-    networks:
-      - appnet
-
-networks:
-  appnet:
-    driver: bridge

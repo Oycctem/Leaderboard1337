@@ -26,6 +26,7 @@ function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [hasMoreUsers, setHasMoreUsers] = useState(true)
   const [userDetails, setUserDetails] = useState<{ [key: string]: any }>({})
+  const [loadingNames, setLoadingNames] = useState<{ [key: string]: boolean }>({})
   const loading = useRef<HTMLDivElement>(null)
   var { campus_name, begin_at } = useParams()
   const token: string = localStorage.getItem("token") || ""
@@ -56,7 +57,10 @@ function Home() {
 
   // Function to fetch user details from 42 API
   const fetchUserDetails = async (login: string) => {
-    if (userDetails[login]) return userDetails[login]
+    if (userDetails[login] || loadingNames[login]) return userDetails[login]
+
+    console.log(`Fetching details for user: ${login}`)
+    setLoadingNames((prev) => ({ ...prev, [login]: true }))
 
     try {
       const response = await fetch(`https://api.intra.42.fr/v2/users/${login}`, {
@@ -67,19 +71,32 @@ function Home() {
         },
       })
 
+      console.log(`API response status for ${login}:`, response.status)
+
       if (response.ok) {
         const userData = await response.json()
-        const fullName = `${userData.first_name} ${userData.last_name}`
+        console.log(`User data for ${login}:`, userData)
+
+        const fullName = `${userData.first_name || ""} ${userData.last_name || ""}`.trim()
+        console.log(`Full name for ${login}: "${fullName}"`)
+
+        const userInfo = { ...userData, fullName }
+
         setUserDetails((prev) => ({
           ...prev,
-          [login]: { ...userData, fullName },
+          [login]: userInfo,
         }))
-        return { ...userData, fullName }
+
+        setLoadingNames((prev) => ({ ...prev, [login]: false }))
+        return userInfo
+      } else {
+        console.error(`Failed to fetch user ${login}:`, response.status, response.statusText)
       }
     } catch (error) {
       console.error(`Error fetching details for ${login}:`, error)
     }
 
+    setLoadingNames((prev) => ({ ...prev, [login]: false }))
     return null
   }
 
@@ -174,6 +191,7 @@ function Home() {
     // Reset state when campus or date changes
     setUsers([])
     setUserDetails({})
+    setLoadingNames({})
     setCurrentPage(1)
     setHasMoreUsers(true)
     fetchUsers(1, false)
@@ -253,7 +271,30 @@ function Home() {
 
   const getUserDisplayName = (user: User) => {
     const details = userDetails[user.login]
-    return details?.fullName || user.login
+    const isLoading = loadingNames[user.login]
+
+    console.log(`Getting display name for ${user.login}:`, {
+      details,
+      fullName: details?.fullName,
+      isLoading,
+      firstName: details?.first_name,
+      lastName: details?.last_name,
+    })
+
+    if (isLoading) {
+      return "Loading..."
+    }
+
+    if (details?.fullName && details.fullName.trim() !== "") {
+      return details.fullName
+    }
+
+    // Fallback to constructing name from individual fields
+    if (details?.first_name || details?.last_name) {
+      return `${details.first_name || ""} ${details.last_name || ""}`.trim()
+    }
+
+    return user.login
   }
 
   const topThree = users.slice(0, 3)

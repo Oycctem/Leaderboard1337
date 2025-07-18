@@ -347,7 +347,7 @@ function Home() {
             }}
             className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 sm:px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-1 sm:flex-none"
           >
-            <option value="0">Select Cohort</option>
+            <option value="0">Select Promo</option>
             {Object.entries(staticPromoList).map(([key, value]) => {
               if (value === "---") {
                 return (

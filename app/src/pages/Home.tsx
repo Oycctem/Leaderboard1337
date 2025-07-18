@@ -306,7 +306,7 @@ function Home() {
             <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
               <img
-                src="/gari.png"
+                src="/gari1.svg.png"
                 alt="Chart Icon"
                 className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
               />

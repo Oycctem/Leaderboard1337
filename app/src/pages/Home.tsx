@@ -304,9 +304,13 @@ function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-xl sm:text-2xl text-white">📊</span>
-              </div>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <img
+              src="/gari.png"
+              alt="Chart Icon"
+              className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+            />
+            </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">Student Rankings</h1>
                 <p className="text-sm sm:text-base text-slate-400">{campus_name || "Tétouan"} Campus</p>

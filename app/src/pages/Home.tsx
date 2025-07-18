@@ -305,11 +305,11 @@ function Home() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-            <img
-              src="/gari.png"
-              alt="Chart Icon"
-              className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
-            />
+              <img
+                src="/chart-icon.png"
+                alt="Chart Icon"
+                className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+              />
             </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">Student Rankings</h1>

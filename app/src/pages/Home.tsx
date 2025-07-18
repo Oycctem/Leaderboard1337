@@ -304,11 +304,11 @@ function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center">
               <img
                 src="/gari1.svg.png"
                 alt="Chart Icon"
-                className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+                className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
               />
             </div>
               <div>

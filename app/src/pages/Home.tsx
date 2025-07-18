@@ -273,16 +273,13 @@ function Home() {
     const details = userDetails[user.login]
     const isLoading = loadingNames[user.login]
 
-    console.log(`Getting display name for ${user.login}:`, {
-      details,
-      fullName: details?.fullName,
-      isLoading,
-      firstName: details?.first_name,
-      lastName: details?.last_name,
-    })
-
     if (isLoading) {
-      return "Loading..."
+      return (
+        <div className="flex items-center gap-2">
+          <img src="/gari.png" alt="Loading" className="w-4 h-4 animate-pulse" />
+          <span>Loading...</span>
+        </div>
+      )
     }
 
     if (details?.fullName && details.fullName.trim() !== "") {
@@ -347,7 +344,7 @@ function Home() {
             }}
             className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 sm:px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-1 sm:flex-none"
           >
-            <option value="0">Select Promo</option>
+            <option value="0">Select Cohort</option>
             {Object.entries(staticPromoList).map(([key, value]) => {
               if (value === "---") {
                 return (
@@ -421,7 +418,7 @@ function Home() {
                               <div className="relative mb-2 sm:mb-4">
                                 <img
                                   className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg sm:rounded-xl object-cover border-2 sm:border-4 border-slate-600 mx-auto"
-                                  src={user.image || "/cat.png"}
+                                  src={user.image || "/gari.png"}
                                   alt={user.login}
                                 />
                                 <div className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm">
@@ -485,7 +482,7 @@ function Home() {
                             {/* Avatar */}
                             <img
                               className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover border-2 border-slate-600 flex-shrink-0"
-                              src={user.image || "/cat.png"}
+                              src={user.image || "/gari.png"}
                               alt={user.login}
                             />
 

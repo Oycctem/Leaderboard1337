@@ -1,4 +1,4 @@
-# School User Ranking Website
+#School User Ranking Website
 
 This project is a web application designed to rank users in a school based on specific criteria. The application uses Deno for the backend and React with Vite (TypeScript) for the frontend.
 

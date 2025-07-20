@@ -91,15 +91,18 @@ router.post("/login", async (context) => {
     const me_data = await me.json()
     const campus = me_data.campus[0]
     const begin_at = me_data.cursus_users[0].begin_at
+    // Format the date as YYYY-MM
+    const begin_at_date = new Date(begin_at)
+    const formatted_date = `${begin_at_date.getUTCFullYear()}-${String(begin_at_date.getUTCMonth() + 1).padStart(2, "0")}`
+
     var promoExists = await promoDB.findOne({ begin_at: begin_at })
     if (!promoExists) {
-      const begin_at_date = new Date(begin_at)
       const newPromo: Promo = {
         pool_year: begin_at_date.getUTCFullYear(),
         pool_month: begin_at_date.toLocaleString("default", {
           month: "long",
         }),
-        begin_at: begin_at,
+        begin_at: formatted_date, // Use formatted date instead of full ISO string
         Campus: {
           id: campus.id,
           name: campus.name,
@@ -107,6 +110,9 @@ router.post("/login", async (context) => {
       }
       await promoDB.insertOne(newPromo)
       promoExists = newPromo
+    } else {
+      // Update existing promo to use formatted date
+      promoExists.begin_at = formatted_date
     }
     contextResponse.data = {
       ...contextResponse.data,

@@ -111,7 +111,17 @@ function Home() {
     }
 
     const endPoint: string = `${import.meta.env.VITE_PUBLIC_API_URL}/cursus_users`
-    const date = new Date(begin_at || new Date().toISOString())
+    // Handle both old format (ISO string) and new format (YYYY-MM)
+    let date: Date
+    if (begin_at && begin_at.includes("-") && begin_at.length <= 7) {
+      // New format: YYYY-MM
+      const [year, month] = begin_at.split("-").map(Number)
+      date = new Date(year, month - 1, 1) // month - 1 because Date months are 0-indexed
+    } else {
+      // Old format: full ISO string or fallback
+      date = new Date(begin_at || new Date().toISOString())
+    }
+
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString()
     const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString()
     const body = {
@@ -304,13 +314,9 @@ function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center">
-              <img
-                src="/gari1.svg.png"
-                alt="Chart Icon"
-                className="w-12 h-12 sm:w-14 sm:h-14 object-contain"
-              />
-            </div>
+              <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center">
+                <img src="/gari1.svg.png" alt="Chart Icon" className="w-12 h-12 sm:w-14 sm:h-14 object-contain" />
+              </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white">Poolers Rankings</h1>
                 <p className="text-sm sm:text-base text-slate-400">{campus_name || "Tétouan"} Campus</p>

@@ -1,127 +1,220 @@
-#School User Ranking Website
+# 1337 Pool Rank - Leaderboard System
 
-This project is a web application designed to rank users in a school based on specific criteria. The application uses Deno for the backend and React with Vite (TypeScript) for the frontend.
+A comprehensive ranking system for 1337 School poolers across Morocco campuses, built with React, TypeScript, and Deno.
 
-## Table of Contents
+## 🌟 Features
 
-- [Description](#description)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
-- [Contributing](#contributing)
-- [License](#license)
+- **Real-time Rankings**: Live leaderboard of poolers sorted by level
+- **Multi-Campus Support**: Tétouan, Rabat, Benguerir, and Khouribga campuses
+- **42 OAuth Integration**: Secure authentication using 42 Intra API
+- **Responsive Design**: Mobile-first design with Tailwind CSS
+- **Interactive Podium**: Special display for top 3 performers
+- **Infinite Scroll**: Load more users dynamically
+- **User Profiles**: Direct links to 42 Intra profiles
 
-## Description
+## 🏗️ Architecture
 
-The School User Ranking Website allows users to log in using their credentials, fetches user data from an external API, and displays rankings based on various metrics. The backend handles authentication, data fetching, and database operations, while the frontend provides a responsive and interactive user interface.
+### Frontend (React + TypeScript)
+- **Framework**: React 18 with TypeScript
+- **Routing**: React Router DOM
+- **Styling**: Tailwind CSS with custom animations
+- **Build Tool**: Vite
+- **State Management**: React Hooks
 
-Key features include:
-- OAuth authentication with 42 API.
-- Fetching and displaying user data from an external API.
-- Storing user data and campus information in a JSON database.
-- Ranking users based on criteria like level and campus.
-- Interactive and responsive UI built with React and Vite.
+### Backend (Deno + Oak)
+- **Runtime**: Deno
+- **Framework**: Oak (Express-like framework for Deno)
+- **Database**: AloeDB (JSON-based database)
+- **API Integration**: 42 Intra API
 
-## Installation
+### Infrastructure
+- **Containerization**: Docker & Docker Compose
+- **Reverse Proxy**: Nginx
+- **Environment**: Production-ready setup
+
+## 🚀 Quick Start
 
 ### Prerequisites
+- Docker and Docker Compose
+- 42 Intra API credentials
 
-- [Docker](https://www.docker.com/)
+### Environment Setup
 
-### Setup
+1. **Backend Environment** (\`backend/.env\`):
+\`\`\`env
+UID=your_42_client_id
+SECRET=your_42_client_secret
+REDIRECT_URI=http://localhost/callback
+BASE_URL=https://api.intra.42.fr
+\`\`\`
 
-Clone the repository:
+2. **Frontend Environment** (\`app/.env\`):
+\`\`\`env
+VITE_CLIENT_ID=your_42_client_id
+VITE_REDIRECT_URI=http://localhost/callback
+VITE_PUBLIC_API_URL=http://localhost/api
+\`\`\`
 
-```sh
-git clone https://github.com/Labrahmi/1337Rank.git
-cd 1337Rank
-```
+### Running the Application
 
-Start the application using Docker Compose:
+\`\`\`bash
+# Clone the repository
+git clone <repository-url>
+cd Leaderboard1337-main
 
-```sh
-docker-compose up --build
-```
+# Start all services
+docker-compose up -d
 
-This command will build and start both the backend and frontend services. The backend will be available at `http://localhost:8000` and the frontend at `http://localhost`.
+# Access the application
+open http://localhost
+\`\`\`
 
-## Usage
+## 📱 User Journey
 
-### Accessing the Application
+### 1. Authentication Flow
+1. User visits the login page
+2. Clicks "Login with Intra" → Redirects to 42 OAuth
+3. After authorization → Redirects to \`/callback\`
+4. Backend processes the auth code and fetches user data
+5. User is redirected to their campus leaderboard: \`/{campus_name}/{begin_at}\`
 
-Open your browser and navigate to `http://localhost`.
+### 2. Leaderboard Experience
+- **Top 3 Podium**: Special animated display for top performers
+- **Complete Rankings**: Scrollable list of all poolers
+- **User Cards**: Avatar, name, login, and level information
+- **Campus/Promo Selection**: Dropdown filters for different cohorts
+- **Profile Links**: Click any user to view their 42 profile
 
-### Authentication and Data Fetching
+## 🔧 API Endpoints
 
-1. Log in using your credentials.
-2. The application will fetch your data from the external API.
-3. User data and campus information will be stored in the backend database.
-4. Rankings will be displayed on the frontend based on the fetched data.
+### Authentication
+- \`POST /api/login\` - Exchange OAuth code for access token
 
-## Project Structure
+### Data Fetching
+- \`POST /api/cursus_users\` - Get ranked users for specific campus/promo
+- \`GET /api/campuses\` - Get available campuses
 
-```
-.
-├── app
-│   ├── deno.lock
-│   ├── index.html
-│   ├── node_modules
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── postcss.config.js
-│   ├── public
-│   │   ├── 42_logo.png
-│   │   ├── back.png
-│   │   ├── cat.png
-│   │   ├── chess-8348280.jpeg
-│   │   ├── chess-8348280_trans.png
-│   │   ├── profile.png
-│   │   └── vite.svg
-│   ├── README.md
-│   ├── src
-│   │   ├── App.css
-│   │   ├── assets
-│   │   ├── index.css
-│   │   ├── main.tsx
-│   │   ├── pages
-│   │   └── vite-env.d.ts
-│   ├── tailwind.config.js
-│   ├── tsconfig.app.json
-│   ├── tsconfig.json
-│   ├── tsconfig.node.json
-│   └── vite.config.ts
-├── backend
-│   ├── api
-│   │   └── db
-│   ├── db
-│   │   ├── campus.json
-│   │   └── promo.json
-│   ├── deps.ts
-│   ├── Dockerfile
-│   └── main.ts
-└── docker-compose.yml
-```
+## 🎨 UI Components
 
-## Environment Variables
+### Key Pages
+- **Login** (\`/src/pages/Login.tsx\`) - OAuth authentication
+- **Callback** (\`/src/pages/Callback.tsx\`) - Handle OAuth redirect
+- **Home** (\`/src/pages/Home.tsx\`) - Main leaderboard interface
 
-The following environment variables need to be set in the `backend/.env` file:
+### Styling Features
+- **Glass Morphism**: Translucent cards with backdrop blur
+- **Gradient Animations**: Dynamic color transitions
+- **Responsive Design**: Mobile-first approach
+- **Custom Animations**: Floating, pulsing, and stagger effects
 
-- `UID`: Your client ID
-- `SECRET`: Your client secret
-- `REDIRECT_URI`: The redirect URI for OAuth
-- `BASE_URL`: The base URL for the API
+## 🏛️ Campus Support
 
-## Contributing
+Currently supports 4 campuses:
+- **Tétouan** (ID: 55)
+- **Rabat** (ID: 75)
+- **Benguerir** (ID: 21)
+- **Khouribga** (ID: 16)
 
-Contributions are welcome! Please follow these steps:
+## 📊 Data Structure
 
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Commit your changes (`git commit -m 'Add some feature'`).
-4. Push to the branch (`git push origin feature/your-feature`).
-5. Open a pull request.
+### User Data
+\`\`\`typescript
+interface UserData {
+  id: number | null
+  order: number        // Ranking position
+  login: string       // 42 username
+  image: string       // Profile picture URL
+  lvl: string         // Current level (e.g., "3.42")
+  campus?: string     // Campus name
+}
+\`\`\`
 
-## License
+### Campus Data
+\`\`\`typescript
+interface Campus {
+  id: number
+  name: string
+}
+\`\`\`
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+## 🔒 Security Features
+
+- **OAuth 2.0**: Secure authentication via 42 Intra
+- **Token Management**: Secure token storage and validation
+- **CORS Protection**: Configured for cross-origin requests
+- **Environment Variables**: Sensitive data protection
+
+## 🚀 Deployment
+
+### Production Setup
+1. Update environment variables for production URLs
+2. Configure SSL certificates (recommended)
+3. Set up domain DNS records
+4. Deploy using Docker Compose
+
+### Nginx Configuration
+The included nginx.conf handles:
+- Frontend routing (React Router)
+- API proxying to backend
+- Static asset serving
+- WebSocket support for development
+
+## 🛠️ Development
+
+### Frontend Development
+\`\`\`bash
+cd app
+npm install
+npm run dev
+\`\`\`
+
+### Backend Development
+\`\`\`bash
+cd backend
+deno run --allow-net --allow-read --allow-write main.ts
+\`\`\`
+
+### Database
+- Uses JSON files for data persistence
+- Automatic promo creation for new users
+- Campus data cached locally
+
+## 📈 Performance Optimizations
+
+- **Lazy Loading**: Users loaded in batches of 100
+- **Image Optimization**: Optimized avatar loading
+- **Caching**: User details cached to reduce API calls
+- **Pagination**: Infinite scroll for large datasets
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 🆘 Support
+
+For issues and questions:
+1. Check existing GitHub issues
+2. Create a new issue with detailed description
+3. Include environment details and error logs
+
+## 🔮 Future Enhancements
+
+- [ ] Real-time updates with WebSockets
+- [ ] Advanced filtering and search
+- [ ] Historical ranking data
+- [ ] Performance analytics
+- [ ] Mobile app version
+- [ ] Additional campus support
+
+---
+
+**Built with ❤️ for the 1337 School community**
+\`\`\`

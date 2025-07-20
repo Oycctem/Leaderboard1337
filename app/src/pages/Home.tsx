@@ -312,13 +312,13 @@ function Home() {
               />
             </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white">Student Rankings</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">Poolers Rankings</h1>
                 <p className="text-sm sm:text-base text-slate-400">{campus_name || "Tétouan"} Campus</p>
               </div>
             </div>
             <div className="text-left sm:text-right">
               <div className="text-xl sm:text-2xl font-bold text-white">{users.length}</div>
-              <div className="text-slate-400 text-sm">Students</div>
+              <div className="text-slate-400 text-sm">Poolers</div>
             </div>
           </div>
         </div>
@@ -348,7 +348,7 @@ function Home() {
             }}
             className="bg-slate-700 border border-slate-600 text-white rounded-lg px-3 sm:px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-1 sm:flex-none"
           >
-            <option value="0">Select Cohort</option>
+            <option value="0">Select Promo</option>
             {Object.entries(staticPromoList).map(([key, value]) => {
               if (value === "---") {
                 return (
@@ -380,8 +380,8 @@ function Home() {
         {users.length === 0 ? (
           <div className="text-center py-12 sm:py-20">
             <div className="text-4xl sm:text-6xl mb-4 sm:mb-6">📋</div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">No Students Found</h2>
-            <p className="text-slate-400 mb-6 sm:mb-8">Try selecting a different campus or cohort</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">No Poolers Found</h2>
+            <p className="text-slate-400 mb-6 sm:mb-8">Try selecting a different campus or promo</p>
             <Link
               to="/login"
               className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
@@ -396,7 +396,7 @@ function Home() {
               <div className="mb-8 sm:mb-12">
                 <div className="text-center mb-6 sm:mb-8">
                   <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">Top Performers</h2>
-                  <p className="text-slate-400">Highest ranking students</p>
+                  <p className="text-slate-400">Highest Ranking Poolers</p>
                 </div>
 
                 <div className="flex items-end justify-center gap-3 sm:gap-6 mb-6 sm:mb-8">
@@ -460,7 +460,7 @@ function Home() {
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center gap-3 mb-4 sm:mb-6">
                   <div className="h-px bg-slate-700 flex-1"></div>
-                  <h3 className="text-base sm:text-lg font-semibold text-slate-300">All Students</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-slate-300">All Poolers</h3>
                   <div className="h-px bg-slate-700 flex-1"></div>
                 </div>
 
@@ -538,11 +538,11 @@ function Home() {
                   ) : (
                     <>
                       <span>↓</span>
-                      Load More Students
+                      Load More Poolers
                     </>
                   )}
                 </button>
-                <p className="text-slate-400 text-sm mt-3 sm:mt-4">Showing {users.length} students</p>
+                <p className="text-slate-400 text-sm mt-3 sm:mt-4">Showing {users.length} Poolers</p>
               </div>
             )}
 
@@ -552,7 +552,7 @@ function Home() {
                 <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">✓</div>
                 <p className="text-white text-base sm:text-lg font-medium mb-2">Complete</p>
                 <p className="text-slate-400 text-sm sm:text-base">
-                  Showing all {users.length} students from {campus_name}
+                  Showing all {users.length} Poolers from {campus_name}
                 </p>
               </div>
             )}
@@ -567,7 +567,7 @@ function Home() {
       >
         <div className="text-center px-4">
           <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h3 className="text-white text-lg sm:text-xl font-semibold mb-2">Loading Student Data...</h3>
+          <h3 className="text-white text-lg sm:text-xl font-semibold mb-2">Loading Poolers Data...</h3>
           <p className="text-slate-400 text-sm sm:text-base">Please wait</p>
         </div>
       </div>
